@@ -7,6 +7,10 @@ from app.core.security import pwd_context
 def get_users(db: Session):
     return db.query(User).all()
 
+
+def get_user(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id).first()
+
 def create_user(db: Session, user: UserCreate):
     """Create a new user and store a hashed password."""
     data = user.model_dump()
@@ -305,6 +309,40 @@ def delete_video(db: Session, video_id: int):
         db.delete(db_video)
         db.commit()
         return db_video
+    except Exception:
+        db.rollback()
+        raise
+
+
+def update_user(db: Session, user_id: int, data: dict):
+    """Update an existing user. If `password` is present it will be hashed."""
+    db_user = get_user(db, user_id)
+    if db_user is None:
+        return None
+    # handle password hashing if supplied
+    if "password" in data and data.get("password"):
+        data["password"] = pwd_context.hash(data["password"])
+    for key, value in data.items():
+        if hasattr(db_user, key) and key != "id":
+            setattr(db_user, key, value)
+    try:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception:
+        db.rollback()
+        raise
+
+
+def delete_user(db: Session, user_id: int):
+    db_user = get_user(db, user_id)
+    if db_user is None:
+        return None
+    try:
+        db.delete(db_user)
+        db.commit()
+        return db_user
     except Exception:
         db.rollback()
         raise

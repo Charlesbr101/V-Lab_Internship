@@ -27,6 +27,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
 	id: PositiveInt = Field(description="Unique user identifier")
+	is_root: bool = Field(default=False, description="Whether the user has root/admin privileges")
 	class Config:
 		orm_mode = True
 

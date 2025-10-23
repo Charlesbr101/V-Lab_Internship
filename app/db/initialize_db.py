@@ -58,6 +58,28 @@ def _seed(db):
             print("Failed to create seed users:", e)
             raise
 
+    # Ensure a root/admin user exists. Password can be provided via ROOT_PASSWORD env var.
+    root_user = db.query(models.User).filter(models.User.is_root == True).first()
+    if not root_user:
+        root_email = os.getenv("ROOT_EMAIL", "root@example.com")
+        root_password = os.getenv("ROOT_PASSWORD", "rootpassword")
+        try:
+            u_root = UserCreate.model_validate({"email": root_email, "password": root_password})
+        except ValidationError as ve:
+            print("Root user seed validation failed:", ve)
+            raise
+        try:
+            created = crud.create_user(db, u_root)
+            # mark as root and persist
+            created.is_root = True
+            db.add(created)
+            db.commit()
+            db.refresh(created)
+            print(f"Added root user: {root_email} (change password immediately)")
+        except Exception as e:
+            print("Failed to create root user:", e)
+            raise
+
     # Authors
     if not db.query(models.AuthorPerson).first() and not db.query(models.AuthorInstitution).first():
         try:

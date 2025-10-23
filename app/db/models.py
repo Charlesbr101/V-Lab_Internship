@@ -1,5 +1,5 @@
 from app.db.database import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Boolean
 from sqlalchemy.orm import relationship
 
 class User(Base):
@@ -7,6 +7,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
+    # flag to indicate a root/admin user with special privileges
+    is_root = Column(Boolean, nullable=False, default=False)
     materials = relationship("Material", back_populates="user")
 
 class Material(Base):

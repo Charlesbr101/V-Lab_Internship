@@ -21,7 +21,7 @@ def get_db():
         db.close()
 
 @router.get("", response_model=schemas.Pagination[schemas.User])
-def read_users(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100)):
+def read_users(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100), current_user=Depends(get_current_user)):
     # Efficient pagination using DB queries
     q = db.query(crud.User)
     total = q.count()
@@ -31,6 +31,10 @@ def read_users(response: Response, request: Request, db: Session = Depends(get_d
     # build links
     def _make_url(p: int):
         return str(request.url.replace_query_params(page=p, page_size=page_size))
+
+    # Only root may view full user list
+    if not getattr(current_user, "is_root", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can view users")
 
     links = {
         "first": _make_url(1),
@@ -47,11 +51,43 @@ def read_users(response: Response, request: Request, db: Session = Depends(get_d
         "links": links,
     }
 
-
 @router.post("", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    # Only the root user may perform user CRUD operations
+    if not getattr(current_user, "is_root", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can manage users")
     try:
         return crud.create_user(db, user)
     except IntegrityError as e:
         # translate DB constraint errors to HTTP 400
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
+
+
+@router.put("/{user_id}", response_model=schemas.User)
+def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    # Only root can update users
+    if not getattr(current_user, "is_root", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can manage users")
+    db_user = crud.get_user(db, user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        updated = crud.update_user(db, user_id, user.model_dump(exclude_none=True))
+        return updated
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
+
+
+@router.delete("/{user_id}", response_model=schemas.User)
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    # Only root can delete users
+    if not getattr(current_user, "is_root", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can manage users")
+    db_user = crud.get_user(db, user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        deleted = crud.delete_user(db, user_id)
+        return deleted
+    except IntegrityError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
