@@ -13,7 +13,7 @@ import app.schemas as schemas
 from app.db.database import SessionLocal
 from app.deps import get_current_user, get_current_user_optional
 
-router = APIRouter(prefix="/materials/books", tags=["materials"])
+router = APIRouter(prefix="/materials/books", tags=["Materials - Books"])
 
 
 def get_db():
@@ -52,6 +52,22 @@ def read_books(
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/{book_id}", response_model=schemas.Book)
+def read_book(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user_optional),
+):
+    db_book = crud.get_book(db, book_id)
+    if db_book is None:
+        raise HTTPException(status_code=404, detail="Book not found")
+    # enforce visibility: published or owner/root
+    if db_book.status != "published":
+        if current_user is None or (db_book.user_id != current_user.id and not getattr(current_user, "is_root", False)):
+            raise HTTPException(status_code=403, detail="Not allowed to view this book")
+    return db_book
 
 
 @router.post("", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)

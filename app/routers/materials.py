@@ -10,7 +10,7 @@ from app.utils import parse_integrity_error
 from app.db.database import SessionLocal
 from app.deps import get_current_user_optional
 
-router = APIRouter(prefix="/materials", tags=["materials"])
+router = APIRouter(prefix="/materials", tags=["Materials"])
 
 
 def get_db():
@@ -49,3 +49,19 @@ def read_materials(
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/{material_id}", response_model=schemas.Material)
+def read_material(
+    material_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user_optional),
+):
+    db_material = crud.get_material(db, material_id)
+    if db_material is None:
+        raise HTTPException(status_code=404, detail="Material not found")
+    # If not published, only owner or root may view
+    if db_material.status != "published":
+        if current_user is None or (db_material.user_id != current_user.id and not getattr(current_user, "is_root", False)):
+            raise HTTPException(status_code=403, detail="Not allowed to view this material")
+    return db_material

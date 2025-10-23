@@ -11,6 +11,10 @@ def get_users(db: Session):
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
+
+def get_material(db: Session, material_id: int):
+    return db.query(Material).filter(Material.id == material_id).first()
+
 def create_user(db: Session, user: UserCreate):
     """Create a new user and store a hashed password."""
     data = user.model_dump()
@@ -216,6 +220,10 @@ def get_book(db: Session, book_id: int):
     return db.query(Book).filter(Book.id == book_id).first()
 
 
+def get_article(db: Session, article_id: int):
+    return db.query(Article).filter(Article.id == article_id).first()
+
+
 def update_book(db: Session, book_id: int, data: dict):
     db_book = get_book(db, book_id)
     if db_book is None:
@@ -282,6 +290,18 @@ def delete_article(db: Session, article_id: int):
 
 def get_video(db: Session, video_id: int):
     return db.query(Video).filter(Video.id == video_id).first()
+
+
+def get_author(db: Session, author_id: int):
+    return db.query(Author).filter(Author.id == author_id).first()
+
+
+def get_person_author(db: Session, person_id: int):
+    return db.query(AuthorPerson).filter(AuthorPerson.id == person_id).first()
+
+
+def get_institution_author(db: Session, inst_id: int):
+    return db.query(AuthorInstitution).filter(AuthorInstitution.id == inst_id).first()
 
 
 def update_video(db: Session, video_id: int, data: dict):

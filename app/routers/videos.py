@@ -10,7 +10,7 @@ import app.schemas as schemas
 from app.db.database import SessionLocal
 from app.deps import get_current_user, get_current_user_optional
 
-router = APIRouter(prefix="/materials/videos", tags=["materials"])
+router = APIRouter(prefix="/materials/videos", tags=["Materials - Videos"])
 
 
 def get_db():
@@ -49,6 +49,21 @@ def read_videos(
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/{video_id}", response_model=schemas.Video)
+def read_video(
+    video_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user_optional),
+):
+    db_video = crud.get_video(db, video_id)
+    if db_video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if db_video.status != "published":
+        if current_user is None or (db_video.user_id != current_user.id and not getattr(current_user, "is_root", False)):
+            raise HTTPException(status_code=403, detail="Not allowed to view this video")
+    return db_video
 
 
 @router.post("", response_model=schemas.Video, status_code=status.HTTP_201_CREATED)

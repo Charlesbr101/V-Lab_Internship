@@ -3,14 +3,14 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from app.utils import parse_integrity_error
+from app.utils import parse_integrity_error, _to_http_validation_error
 
 import app.db.crud as crud
 import app.schemas as schemas
 from app.db.database import SessionLocal
 from app.deps import get_current_user
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 def get_db():
@@ -50,6 +50,17 @@ def read_users(response: Response, request: Request, db: Session = Depends(get_d
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/{user_id}", response_model=schemas.User)
+def read_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    # Only root may view user details
+    if not getattr(current_user, "is_root", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can view users")
+    db_user = crud.get_user(db, user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
 
 @router.post("", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):

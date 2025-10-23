@@ -10,7 +10,7 @@ from app.db.database import SessionLocal
 from app.deps import get_current_user
 from app.utils import parse_integrity_error
 
-router = APIRouter(prefix="/authors", tags=["authors"])
+router = APIRouter(prefix="/authors", tags=["Authors"])
 
 
 def get_db():
@@ -40,6 +40,14 @@ def read_authors(response: Response, request: Request, db: Session = Depends(get
         "links": links,
     }
 
+
+@router.get("/{author_id}", response_model=schemas.Author)
+def read_author(author_id: int, db: Session = Depends(get_db)):
+    db_author = crud.get_author(db, author_id)
+    if db_author is None:
+        raise HTTPException(status_code=404, detail="Author not found")
+    return db_author
+
 # Person authors
 @router.get("/persons", response_model=schemas.Pagination[schemas.AuthorPerson])
 def read_person_authors(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100)):
@@ -60,6 +68,14 @@ def read_person_authors(response: Response, request: Request, db: Session = Depe
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/persons/{person_id}", response_model=schemas.AuthorPerson)
+def read_person_author(person_id: int, db: Session = Depends(get_db)):
+    db_person = crud.get_person_author(db, person_id)
+    if db_person is None:
+        raise HTTPException(status_code=404, detail="Person author not found")
+    return db_person
 
 
 @router.post("/persons", response_model=schemas.AuthorPerson, status_code=status.HTTP_201_CREATED)
@@ -90,6 +106,14 @@ def read_institution_authors(response: Response, request: Request, db: Session =
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/institutions/{institution_id}", response_model=schemas.AuthorInstitution)
+def read_institution_author(institution_id: int, db: Session = Depends(get_db)):
+    db_inst = crud.get_institution_author(db, institution_id)
+    if db_inst is None:
+        raise HTTPException(status_code=404, detail="Institution author not found")
+    return db_inst
 
 
 @router.post("/institutions", response_model=schemas.AuthorInstitution, status_code=status.HTTP_201_CREATED)

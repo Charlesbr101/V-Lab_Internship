@@ -10,7 +10,7 @@ import app.schemas as schemas
 from app.db.database import SessionLocal
 from app.deps import get_current_user, get_current_user_optional
 
-router = APIRouter(prefix="/materials/articles", tags=["materials"])
+router = APIRouter(prefix="/materials/articles", tags=["Materials - Articles"])
 
 
 def get_db():
@@ -49,6 +49,21 @@ def read_articles(
         "page_size": page_size,
         "links": links,
     }
+
+
+@router.get("/{article_id}", response_model=schemas.Article)
+def read_article(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user_optional),
+):
+    db_article = crud.get_article(db, article_id)
+    if db_article is None:
+        raise HTTPException(status_code=404, detail="Article not found")
+    if db_article.status != "published":
+        if current_user is None or (db_article.user_id != current_user.id and not getattr(current_user, "is_root", False)):
+            raise HTTPException(status_code=403, detail="Not allowed to view this article")
+    return db_article
 
 
 @router.post("", response_model=schemas.Article, status_code=status.HTTP_201_CREATED)
