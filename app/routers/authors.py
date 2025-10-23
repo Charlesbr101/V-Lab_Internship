@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("", response_model=schemas.Pagination[schemas.Author])
+@router.get("", response_model=schemas.Pagination[schemas.Author], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_authors(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100)):
     items, total = crud.get_authors(db, page=page, page_size=page_size)
     last_page = max(1, (total + page_size - 1) // page_size)
@@ -41,7 +41,7 @@ def read_authors(response: Response, request: Request, db: Session = Depends(get
     }
 
 
-@router.get("/{author_id}", response_model=schemas.Author)
+@router.get("/{author_id}", response_model=schemas.Author, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_author(author_id: int, db: Session = Depends(get_db)):
     db_author = crud.get_author(db, author_id)
     if db_author is None:
@@ -49,7 +49,7 @@ def read_author(author_id: int, db: Session = Depends(get_db)):
     return db_author
 
 # Person authors
-@router.get("/persons", response_model=schemas.Pagination[schemas.AuthorPerson])
+@router.get("/persons", response_model=schemas.Pagination[schemas.AuthorPerson], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_person_authors(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100)):
     items, total = crud.get_person_authors(db, page=page, page_size=page_size)
     last_page = max(1, (total + page_size - 1) // page_size)
@@ -70,7 +70,7 @@ def read_person_authors(response: Response, request: Request, db: Session = Depe
     }
 
 
-@router.get("/persons/{person_id}", response_model=schemas.AuthorPerson)
+@router.get("/persons/{person_id}", response_model=schemas.AuthorPerson, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_person_author(person_id: int, db: Session = Depends(get_db)):
     db_person = crud.get_person_author(db, person_id)
     if db_person is None:
@@ -78,7 +78,7 @@ def read_person_author(person_id: int, db: Session = Depends(get_db)):
     return db_person
 
 
-@router.post("/persons", response_model=schemas.AuthorPerson, status_code=status.HTTP_201_CREATED)
+@router.post("/persons", response_model=schemas.AuthorPerson, status_code=status.HTTP_201_CREATED, responses=schemas.HTTP_ERROR_RESPONSES)
 def create_person_author(author: schemas.AuthorPersonCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_person_author(db, author)
@@ -87,7 +87,7 @@ def create_person_author(author: schemas.AuthorPersonCreate, db: Session = Depen
 
 
 # Institution authors
-@router.get("/institutions", response_model=schemas.Pagination[schemas.AuthorInstitution])
+@router.get("/institutions", response_model=schemas.Pagination[schemas.AuthorInstitution], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_institution_authors(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100)):
     items, total = crud.get_institution_authors(db, page=page, page_size=page_size)
     last_page = max(1, (total + page_size - 1) // page_size)
@@ -108,7 +108,7 @@ def read_institution_authors(response: Response, request: Request, db: Session =
     }
 
 
-@router.get("/institutions/{institution_id}", response_model=schemas.AuthorInstitution)
+@router.get("/institutions/{institution_id}", response_model=schemas.AuthorInstitution, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_institution_author(institution_id: int, db: Session = Depends(get_db)):
     db_inst = crud.get_institution_author(db, institution_id)
     if db_inst is None:
@@ -116,7 +116,7 @@ def read_institution_author(institution_id: int, db: Session = Depends(get_db)):
     return db_inst
 
 
-@router.post("/institutions", response_model=schemas.AuthorInstitution, status_code=status.HTTP_201_CREATED)
+@router.post("/institutions", response_model=schemas.AuthorInstitution, status_code=status.HTTP_201_CREATED, responses=schemas.HTTP_ERROR_RESPONSES)
 def create_institution_author(author: schemas.AuthorInstitutionCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_institution_author(db, author)

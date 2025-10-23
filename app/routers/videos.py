@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("", response_model=schemas.Pagination[schemas.Video])
+@router.get("", response_model=schemas.Pagination[schemas.Video], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_videos(
     response: Response,
     request: Request,
@@ -51,7 +51,7 @@ def read_videos(
     }
 
 
-@router.get("/{video_id}", response_model=schemas.Video)
+@router.get("/{video_id}", response_model=schemas.Video, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_video(
     video_id: int,
     db: Session = Depends(get_db),
@@ -66,7 +66,7 @@ def read_video(
     return db_video
 
 
-@router.post("", response_model=schemas.Video, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Video, status_code=status.HTTP_201_CREATED, responses=schemas.HTTP_ERROR_RESPONSES)
 def create_video(video: schemas.VideoCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_video(db, video, current_user.id)
@@ -74,7 +74,7 @@ def create_video(video: schemas.VideoCreate, db: Session = Depends(get_db), curr
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.put("/{video_id}", response_model=schemas.Video)
+@router.put("/{video_id}", response_model=schemas.Video, responses=schemas.HTTP_ERROR_RESPONSES)
 def update_video(video_id: int, video: schemas.VideoCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     db_video = crud.get_video(db, video_id)
     if db_video is None:
@@ -88,7 +88,7 @@ def update_video(video_id: int, video: schemas.VideoCreate, db: Session = Depend
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.delete("/{video_id}", response_model=schemas.Video)
+@router.delete("/{video_id}", response_model=schemas.Video, responses=schemas.HTTP_ERROR_RESPONSES)
 def delete_video(video_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     db_video = crud.get_video(db, video_id)
     if db_video is None:

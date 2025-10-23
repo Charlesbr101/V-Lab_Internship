@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("", response_model=schemas.Pagination[schemas.Material])
+@router.get("", response_model=schemas.Pagination[schemas.Material], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_materials(
     response: Response,
     request: Request,
@@ -51,7 +51,7 @@ def read_materials(
     }
 
 
-@router.get("/{material_id}", response_model=schemas.Material)
+@router.get("/{material_id}", response_model=schemas.Material, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_material(
     material_id: int,
     db: Session = Depends(get_db),

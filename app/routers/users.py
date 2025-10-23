@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from app.utils import parse_integrity_error, _to_http_validation_error
+from app.utils import parse_integrity_error
 
 import app.db.crud as crud
 import app.schemas as schemas
@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("", response_model=schemas.Pagination[schemas.User])
+@router.get("", response_model=schemas.Pagination[schemas.User], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_users(response: Response, request: Request, db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=100), current_user=Depends(get_current_user)):
     # Efficient pagination using DB queries
     q = db.query(crud.User)
@@ -52,7 +52,7 @@ def read_users(response: Response, request: Request, db: Session = Depends(get_d
     }
 
 
-@router.get("/{user_id}", response_model=schemas.User)
+@router.get("/{user_id}", response_model=schemas.User, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Only root may view user details
     if not getattr(current_user, "is_root", False):
@@ -62,7 +62,7 @@ def read_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-@router.post("", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.User, status_code=status.HTTP_201_CREATED, responses=schemas.HTTP_ERROR_RESPONSES)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Only the root user may perform user CRUD operations
     if not getattr(current_user, "is_root", False):
@@ -74,11 +74,11 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.put("/{user_id}", response_model=schemas.User)
+@router.put("/{user_id}", response_model=schemas.User, responses=schemas.HTTP_ERROR_RESPONSES)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Only root can update users
-    if not getattr(current_user, "is_root", False):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can manage users")
+    if not getattr(current_user, "is_root", False) and user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root or same user can manage users")
     db_user = crud.get_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -89,11 +89,11 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.delete("/{user_id}", response_model=schemas.User)
+@router.delete("/{user_id}", response_model=schemas.User, responses=schemas.HTTP_ERROR_RESPONSES)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Only root can delete users
-    if not getattr(current_user, "is_root", False):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root user can manage users")
+    if not getattr(current_user, "is_root", False) and user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root or same user can manage users")
     db_user = crud.get_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")

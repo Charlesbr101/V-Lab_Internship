@@ -16,6 +16,29 @@ class Pagination(GenericModel, Generic[T]):
 	page_size: int
 	links: Dict[str, Optional[str]]
 
+#########################################
+# Error schemas used in route responses
+class ErrorItem(BaseModel):
+	loc: List[str]
+	msg: str
+	type: str
+
+
+class ValidationErrorResponse(BaseModel):
+	detail: List[ErrorItem]
+
+
+class SimpleError(BaseModel):
+	detail: str
+
+########################################################
+# Common responses mapping to reuse in route decorators
+HTTP_ERROR_RESPONSES = {
+	400: {"model": ValidationErrorResponse, "description": "Bad Request (validation or integrity error)"},
+	403: {"model": SimpleError, "description": "Forbidden"},
+	404: {"model": SimpleError, "description": "Not Found"},
+}
+
 ##################
 # User Schemas
 class UserBase(BaseModel):

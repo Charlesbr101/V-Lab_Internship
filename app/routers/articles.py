@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("", response_model=schemas.Pagination[schemas.Article])
+@router.get("", response_model=schemas.Pagination[schemas.Article], responses=schemas.HTTP_ERROR_RESPONSES)
 def read_articles(
     response: Response,
     request: Request,
@@ -51,7 +51,7 @@ def read_articles(
     }
 
 
-@router.get("/{article_id}", response_model=schemas.Article)
+@router.get("/{article_id}", response_model=schemas.Article, responses=schemas.HTTP_ERROR_RESPONSES)
 def read_article(
     article_id: int,
     db: Session = Depends(get_db),
@@ -66,7 +66,7 @@ def read_article(
     return db_article
 
 
-@router.post("", response_model=schemas.Article, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Article, status_code=status.HTTP_201_CREATED, responses=schemas.HTTP_ERROR_RESPONSES)
 def create_article(article: schemas.ArticleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_article(db, article, current_user.id)
@@ -74,7 +74,7 @@ def create_article(article: schemas.ArticleCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.put("/{article_id}", response_model=schemas.Article)
+@router.put("/{article_id}", response_model=schemas.Article, responses=schemas.HTTP_ERROR_RESPONSES)
 def update_article(article_id: int, article: schemas.ArticleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     db_article = crud.get_article(db, article_id)
     if db_article is None:
@@ -88,7 +88,7 @@ def update_article(article_id: int, article: schemas.ArticleCreate, db: Session 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
 
-@router.delete("/{article_id}", response_model=schemas.Article)
+@router.delete("/{article_id}", response_model=schemas.Article, responses=schemas.HTTP_ERROR_RESPONSES)
 def delete_article(article_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     db_article = crud.get_article(db, article_id)
     if db_article is None:
