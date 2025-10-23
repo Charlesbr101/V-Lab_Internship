@@ -14,11 +14,10 @@ class Material(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(300), nullable=False)
     description = Column(String(1000), nullable=True)
-    status = Column(String(9), nullable=False)  # rascunho, publicado, arquivado
+    status = Column(String(9), nullable=False)  # draft, published, filed
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    # discriminator column for polymorphic identity
-    type = Column(String(50), nullable=False)
+    type = Column(String(50), nullable=False) # discriminator column for polymorphic identity
     user = relationship("User", back_populates="materials")
     author = relationship("Author", back_populates="materials")
 
@@ -59,7 +58,6 @@ class Video(Material):
 class Author(Base):
     __tablename__ = "authors"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(120), nullable=False)
     # discriminator for joined inheritance
     type = Column(String(50), nullable=False)
     materials = relationship("Material", back_populates="author")
@@ -70,18 +68,20 @@ class Author(Base):
         "with_polymorphic": "*",
     }
 
-class PersonAuthor(Author):
+class AuthorPerson(Author):
     __tablename__ = "person_authors"
     id = Column(Integer, ForeignKey("authors.id"), primary_key=True, index=True)
+    name = Column(String(80), nullable=False)
     birth_date = Column(Date, nullable=False)
 
     __mapper_args__ = {
         "polymorphic_identity": "person",
     }
 
-class InstitutionAuthor(Author):
+class AuthorInstitution(Author):
     __tablename__ = "institution_authors"
     id = Column(Integer, ForeignKey("authors.id"), primary_key=True, index=True)
+    name = Column(String(120), nullable=False)
     city = Column(String(80), nullable=False)
 
     __mapper_args__ = {

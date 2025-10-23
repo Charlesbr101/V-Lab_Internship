@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from app.db.models import User, Book, Article, Video, PersonAuthor, InstitutionAuthor, Material, Author
-from app.schemas import UserCreate, BookCreate, ArticleCreate, VideoCreate, PersonAuthorCreate, InstitutionAuthorCreate
+from app.db.models import User, Book, Article, Video, AuthorPerson, AuthorInstitution, Material, Author
+from app.schemas import UserCreate, BookCreate, ArticleCreate, VideoCreate, AuthorPersonCreate, AuthorInstitutionCreate
 
 def get_users(db: Session):
     return db.query(User).all()
@@ -23,18 +23,18 @@ def get_materials(db: Session, user=None):
     """
     q = db.query(Material)
     if user is None:
-        q = q.filter(Material.status == "publicado")
+        q = q.filter(Material.status == "published")
     else:
-        q = q.filter((Material.status == "publicado") | (Material.user_id == user.id))
+        q = q.filter((Material.status == "published") | (Material.user_id == user.id))
     return q.order_by(Material.id).all()
 
 
 def get_books(db: Session, user=None):
     q = db.query(Book)
     if user is None:
-        q = q.filter(Book.status == "publicado")
+        q = q.filter(Book.status == "published")
     else:
-        q = q.filter((Book.status == "publicado") | (Book.user_id == user.id))
+        q = q.filter((Book.status == "published") | (Book.user_id == user.id))
     return q.all()
 
 def create_book(db: Session, book: BookCreate, user_id: int):
@@ -51,9 +51,9 @@ def create_book(db: Session, book: BookCreate, user_id: int):
 def get_articles(db: Session, user=None):
     q = db.query(Article)
     if user is None:
-        q = q.filter(Article.status == "publicado")
+        q = q.filter(Article.status == "published")
     else:
-        q = q.filter((Article.status == "publicado") | (Article.user_id == user.id))
+        q = q.filter((Article.status == "published") | (Article.user_id == user.id))
     return q.all()
 
 def create_article(db: Session, article: ArticleCreate, user_id: int):
@@ -70,9 +70,9 @@ def create_article(db: Session, article: ArticleCreate, user_id: int):
 def get_videos(db: Session, user=None):
     q = db.query(Video)
     if user is None:
-        q = q.filter(Video.status == "publicado")
+        q = q.filter(Video.status == "published")
     else:
-        q = q.filter((Video.status == "publicado") | (Video.user_id == user.id))
+        q = q.filter((Video.status == "published") | (Video.user_id == user.id))
     return q.all()
 
 def create_video(db: Session, video: VideoCreate, user_id: int):
@@ -91,10 +91,10 @@ def get_authors(db: Session):
     return authors
 
 def get_person_authors(db: Session):
-    return db.query(PersonAuthor).all()
+    return db.query(AuthorPerson).all()
 
-def create_person_author(db: Session, author: PersonAuthorCreate):
-    db_author = PersonAuthor(**author.model_dump())
+def create_person_author(db: Session, author: AuthorPersonCreate):
+    db_author = AuthorPerson(**author.model_dump())
     try:
         db.add(db_author)
         db.commit()
@@ -105,10 +105,10 @@ def create_person_author(db: Session, author: PersonAuthorCreate):
         raise
 
 def get_institution_authors(db: Session):
-    return db.query(InstitutionAuthor).all()
+    return db.query(AuthorInstitution).all()
 
-def create_institution_author(db: Session, author: InstitutionAuthorCreate):
-    db_author = InstitutionAuthor(**author.model_dump())
+def create_institution_author(db: Session, author: AuthorInstitutionCreate):
+    db_author = AuthorInstitution(**author.model_dump())
     try:
         db.add(db_author)
         db.commit()

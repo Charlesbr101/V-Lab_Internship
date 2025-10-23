@@ -9,8 +9,8 @@ from app.db import models
 from app import schemas
 from app.schemas import (
     UserCreate,
-    PersonAuthorCreate,
-    InstitutionAuthorCreate,
+    AuthorPersonCreate,
+    AuthorInstitutionCreate,
     BookCreate,
     ArticleCreate,
     VideoCreate,
@@ -55,15 +55,15 @@ def _seed(db):
         print("Added example users: alice, bob")
 
     # Authors
-    if not db.query(models.PersonAuthor).first() and not db.query(models.InstitutionAuthor).first():
+    if not db.query(models.AuthorPerson).first() and not db.query(models.AuthorInstitution).first():
         try:
-            person_s = PersonAuthorCreate.model_validate({"name": "John Doe", "birth_date": date(1970, 1, 1)})
-            inst_s = InstitutionAuthorCreate.model_validate({"name": "Acme Research", "city": "Lisbon"})
+            person_s = AuthorPersonCreate.model_validate({"name": "John Doe", "birth_date": '1970-01-01'})
+            inst_s = AuthorInstitutionCreate.model_validate({"name": "Acme Research", "city": "Lisbon"})
         except ValidationError as ve:
             print("Author seed validation failed:", ve)
             raise
-        person = models.PersonAuthor(**person_s.model_dump())
-        institution = models.InstitutionAuthor(**inst_s.model_dump())
+        person = models.AuthorPerson(**person_s.model_dump())
+        institution = models.AuthorInstitution(**inst_s.model_dump())
         db.add_all([person, institution])
         db.commit()
         print("Added example authors: person and institution")
@@ -71,17 +71,16 @@ def _seed(db):
     # Materials (books, articles, videos)
     if not db.query(models.Book).first():
         user = db.query(models.User).first()
-        person_author = db.query(models.PersonAuthor).first()
-        institution_author = db.query(models.InstitutionAuthor).first()
+        person_author = db.query(models.AuthorPerson).first()
+        institution_author = db.query(models.AuthorInstitution).first()
 
         try:
             book_s = BookCreate.model_validate(
                 {
                     "title": "Example Book",
                     "description": "An example book created during seeding.",
-                    "status": "publicado",
+                    "status": "published",
                     "author_id": person_author.id if person_author else None,
-                    "user_id": user.id if user else None,
                     "isbn": "9783161484100",
                     "page_count": 250,
                 }
@@ -91,9 +90,8 @@ def _seed(db):
                 {
                     "title": "Example Article",
                     "description": "An example article created during seeding.",
-                    "status": "rascunho",
+                    "status": "draft",
                     "author_id": institution_author.id if institution_author else None,
-                    "user_id": user.id if user else None,
                     "doi": "10.1000/exampledoi",
                 }
             )
@@ -102,9 +100,8 @@ def _seed(db):
                 {
                     "title": "Example Video",
                     "description": "An example video created during seeding.",
-                    "status": "publicado",
+                    "status": "published",
                     "author_id": person_author.id if person_author else None,
-                    "user_id": user.id if user else None,
                     "duration": 10,
                 }
             )
@@ -112,9 +109,9 @@ def _seed(db):
             print("Material seed validation failed:", ve)
             raise
 
-        book = models.Book(**book_s.model_dump())
-        article = models.Article(**article_s.model_dump())
-        video = models.Video(**video_s.model_dump())
+        book = models.Book(**book_s.model_dump(), user_id=user.id if user else None)
+        article = models.Article(**article_s.model_dump(), user_id=user.id if user else None)
+        video = models.Video(**video_s.model_dump(), user_id=user.id if user else None)
 
         db.add_all([book, article, video])
         db.commit()
