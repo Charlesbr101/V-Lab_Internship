@@ -1,12 +1,14 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+from app.utils import parse_integrity_error
 
 import app.db.crud as crud
 import app.schemas as schemas
 from app.db.database import SessionLocal
-from app.deps import get_current_user
+from app.deps import get_current_user, get_current_user_optional
 
 router = APIRouter(prefix="/materials/videos", tags=["materials"])
 
@@ -19,10 +21,41 @@ def get_db():
         db.close()
 
 @router.get("/", response_model=List[schemas.Video])
-def read_videos(db: Session = Depends(get_db)):
-    return crud.get_videos(db)
+def read_videos(db: Session = Depends(get_db), current_user=Depends(get_current_user_optional)):
+    return crud.get_videos(db, current_user)
 
 
 @router.post("/", response_model=schemas.Video, status_code=status.HTTP_201_CREATED)
 def create_video(video: schemas.VideoCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    return crud.create_video(db, video)
+    try:
+        return crud.create_video(db, video)
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
+
+
+@router.put("/{video_id}", response_model=schemas.Video)
+def update_video(video_id: int, video: schemas.VideoCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    db_video = crud.get_video(db, video_id)
+    if db_video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if db_video.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed to modify this video")
+    try:
+        updated = crud.update_video(db, video_id, video.model_dump())
+        return updated
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
+
+
+@router.delete("/{video_id}", response_model=schemas.Video)
+def delete_video(video_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    db_video = crud.get_video(db, video_id)
+    if db_video is None:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if db_video.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed to delete this video")
+    try:
+        deleted = crud.delete_video(db, video_id)
+        return deleted
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))

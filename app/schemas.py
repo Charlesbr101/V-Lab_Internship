@@ -23,7 +23,7 @@ class MaterialBase(BaseModel):
 	author_id: PositiveInt
 	user_id: PositiveInt
 
-	@model_validator(mode="before")
+	@model_validator(mode="after")
 	def validate_status(cls, values):
 		status = values.get("status") if isinstance(values, dict) else getattr(values, "status", None)
 
