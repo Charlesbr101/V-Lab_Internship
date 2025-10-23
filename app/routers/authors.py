@@ -20,7 +20,7 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/", response_model=List[schemas.Author])
+@router.get("", response_model=List[schemas.Author])
 def read_authors(db: Session = Depends(get_db)):
     return crud.get_authors(db)
 

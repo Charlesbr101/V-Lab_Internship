@@ -23,12 +23,12 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/", response_model=List[schemas.Book])
+@router.get("", response_model=List[schemas.Book])
 def read_books(db: Session = Depends(get_db), current_user=Depends(get_current_user_optional)):
     return crud.get_books(db, current_user)
 
 
-@router.post("/", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
 def create_book(book: schemas.PreBookCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Prefer incoming data: if caller provided both title and page_count, skip enrichment
     incoming = book.model_dump()

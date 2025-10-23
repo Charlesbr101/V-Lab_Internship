@@ -20,6 +20,6 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/", response_model=List[schemas.Material])
+@router.get("", response_model=List[schemas.Material])
 def read_materials(db: Session = Depends(get_db), current_user=Depends(get_current_user_optional)):
     return crud.get_materials(db, current_user)

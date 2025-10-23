@@ -20,12 +20,12 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/", response_model=List[schemas.User])
+@router.get("", response_model=List[schemas.User])
 def read_users(db: Session = Depends(get_db)):
     return crud.get_users(db)
 
 
-@router.post("/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_user(db, user)

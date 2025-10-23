@@ -20,12 +20,12 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/", response_model=List[schemas.Video])
+@router.get("", response_model=List[schemas.Video])
 def read_videos(db: Session = Depends(get_db), current_user=Depends(get_current_user_optional)):
     return crud.get_videos(db, current_user)
 
 
-@router.post("/", response_model=schemas.Video, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Video, status_code=status.HTTP_201_CREATED)
 def create_video(video: schemas.VideoCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         return crud.create_video(db, video)
