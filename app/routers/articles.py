@@ -28,7 +28,7 @@ def read_articles(db: Session = Depends(get_db), current_user=Depends(get_curren
 @router.post("", response_model=schemas.Article, status_code=status.HTTP_201_CREATED)
 def create_article(article: schemas.ArticleCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
-        return crud.create_article(db, article)
+        return crud.create_article(db, article, current_user.id)
     except IntegrityError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 

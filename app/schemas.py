@@ -1,6 +1,7 @@
 from datetime import date
 from pydantic import BaseModel, EmailStr, PositiveInt, model_validator
 
+##################
 # User Schemas
 class UserBase(BaseModel):
 	email: EmailStr
@@ -13,14 +14,14 @@ class User(UserBase):
 	id: PositiveInt
 	class Config:
 		orm_mode = True
-        
+
+##################
 # Material Schemas
 class MaterialBase(BaseModel):
 	title: str
 	description: str
 	status: str
 	author_id: PositiveInt
-	user_id: PositiveInt
 
 	@model_validator(mode="before")
 	def validate_status(cls, values):
@@ -32,9 +33,11 @@ class MaterialBase(BaseModel):
     
 class Material(MaterialBase):
 	id: PositiveInt
+	user_id: PositiveInt
 	type: str
 	class Config:
 		orm_mode = True
+
 
 class BookBase(MaterialBase):
 	isbn: str
@@ -51,18 +54,20 @@ class BookBase(MaterialBase):
 				return values
 		raise ValueError("Invalid ISBN-13")
 
-class PreBookCreate(BookBase):
+class BookCreate(BookBase):
 	# Optional Title and Page_count fields
 	title: str | None = None
 	page_count: PositiveInt | None = None
 
-class BookCreate(BookBase):
+class BookUpdate(BookBase):
 	pass
 
 class Book(BookBase):
 	id: PositiveInt
+	user_id: PositiveInt
 	class Config:
 		orm_mode = True
+
 
 class ArticleBase(MaterialBase):
 	doi: str
@@ -72,8 +77,10 @@ class ArticleCreate(ArticleBase):
 
 class Article(ArticleBase):
 	id: PositiveInt
+	user_id: PositiveInt
 	class Config:
 		orm_mode = True
+
 
 class VideoBase(MaterialBase):
 	duration: PositiveInt  # duration in minutes
@@ -83,9 +90,11 @@ class VideoCreate(VideoBase):
 
 class Video(VideoBase):
 	id: PositiveInt
+	user_id: PositiveInt
 	class Config:
 		orm_mode = True
 
+##################
 # Author Schemas
 class AuthorBase(BaseModel):
     name: str
@@ -96,6 +105,7 @@ class Author(AuthorBase):
 	class Config:
 		orm_mode = True
 	
+
 class PersonAuthorBase(BaseModel):
 	name: str
 	birth_date: date

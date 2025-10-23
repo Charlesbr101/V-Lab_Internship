@@ -29,7 +29,7 @@ def read_books(db: Session = Depends(get_db), current_user=Depends(get_current_u
 
 
 @router.post("", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
-def create_book(book: schemas.PreBookCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_book(book: schemas.BookCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     # Prefer incoming data: if caller provided both title and page_count, skip enrichment
     incoming = book.model_dump()
     has_title = bool(incoming.get("title"))
@@ -56,7 +56,7 @@ def create_book(book: schemas.PreBookCreate, db: Session = Depends(get_db), curr
     # Validate merged data and create
     book_obj = schemas.BookCreate.model_validate(book_data)
     try:
-        return crud.create_book(db, book_obj)
+        return crud.create_book(db, book_obj, current_user.id)
     except IntegrityError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=parse_integrity_error(e))
 
@@ -87,7 +87,7 @@ def fetch_openlibrary_metadata(isbn: str) -> Optional[Dict[str, Any]]:
 
 
 @router.put("/{book_id}", response_model=schemas.Book)
-def update_book(book_id: int, book: schemas.BookCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def update_book(book_id: int, book: schemas.BookUpdate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     db_book = crud.get_book(db, book_id)
     if db_book is None:
         raise HTTPException(status_code=404, detail="Book not found")

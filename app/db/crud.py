@@ -37,8 +37,8 @@ def get_books(db: Session, user=None):
         q = q.filter((Book.status == "publicado") | (Book.user_id == user.id))
     return q.all()
 
-def create_book(db: Session, book: BookCreate):
-    db_book = Book(**book.model_dump())
+def create_book(db: Session, book: BookCreate, user_id: int):
+    db_book = Book(**book.model_dump(), user_id=user_id)
     try:
         db.add(db_book)
         db.commit()
@@ -56,8 +56,8 @@ def get_articles(db: Session, user=None):
         q = q.filter((Article.status == "publicado") | (Article.user_id == user.id))
     return q.all()
 
-def create_article(db: Session, article: ArticleCreate):
-    db_article = Article(**article.model_dump())
+def create_article(db: Session, article: ArticleCreate, user_id: int):
+    db_article = Article(**article.model_dump(), user_id=user_id)
     try:
         db.add(db_article)
         db.commit()
@@ -75,8 +75,8 @@ def get_videos(db: Session, user=None):
         q = q.filter((Video.status == "publicado") | (Video.user_id == user.id))
     return q.all()
 
-def create_video(db: Session, video: VideoCreate):
-    db_video = Video(**video.model_dump())
+def create_video(db: Session, video: VideoCreate, user_id: int):
+    db_video = Video(**video.model_dump(), user_id=user_id)
     try:
         db.add(db_video)
         db.commit()
