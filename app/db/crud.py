@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from app.db.models import User, Book, Article, Video, AuthorPerson, AuthorInstitution, Material, Author
 from app.schemas import UserCreate, BookCreate, ArticleCreate, VideoCreate, AuthorPersonCreate, AuthorInstitutionCreate
 
@@ -16,26 +17,62 @@ def create_user(db: Session, user: UserCreate):
         db.rollback()
         raise
 
-def get_materials(db: Session, user=None):
+def get_materials(db: Session, user=None, title: str = None, author_name: str = None, description: str = None, page: int = 1, page_size: int = 10):
     """Return materials that are published or belong to the given user.
 
-    If user is None, only published materials are returned.
+    Optional filters: title, author_name, description (case-insensitive substring).
     """
     q = db.query(Material)
+
+    # filter by author name across person/institution authors
+    if author_name:
+        q = q.outerjoin(AuthorPerson, Material.author_id == AuthorPerson.id).outerjoin(
+            AuthorInstitution, Material.author_id == AuthorInstitution.id
+        ).filter(
+            or_(AuthorPerson.name.ilike(f"%{author_name}%"), AuthorInstitution.name.ilike(f"%{author_name}%"))
+        )
+
+    if title:
+        q = q.filter(Material.title.ilike(f"%{title}%"))
+
+    if description:
+        q = q.filter(Material.description.ilike(f"%{description}%"))
+
     if user is None:
         q = q.filter(Material.status == "published")
     else:
         q = q.filter((Material.status == "published") | (Material.user_id == user.id))
-    return q.order_by(Material.id).all()
+
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(Material.id).limit(page_size).offset(offset).all()
+    return items, total
 
 
-def get_books(db: Session, user=None):
+def get_books(db: Session, user=None, title: str = None, author_name: str = None, description: str = None, page: int = 1, page_size: int = 10):
     q = db.query(Book)
+
+    if author_name:
+        q = q.outerjoin(AuthorPerson, Book.author_id == AuthorPerson.id).outerjoin(
+            AuthorInstitution, Book.author_id == AuthorInstitution.id
+        ).filter(
+            or_(AuthorPerson.name.ilike(f"%{author_name}%"), AuthorInstitution.name.ilike(f"%{author_name}%"))
+        )
+
+    if title:
+        q = q.filter(Book.title.ilike(f"%{title}%"))
+
+    if description:
+        q = q.filter(Book.description.ilike(f"%{description}%"))
+
     if user is None:
         q = q.filter(Book.status == "published")
     else:
         q = q.filter((Book.status == "published") | (Book.user_id == user.id))
-    return q.all()
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(Book.id).limit(page_size).offset(offset).all()
+    return items, total
 
 def create_book(db: Session, book: BookCreate, user_id: int):
     db_book = Book(**book.model_dump(), user_id=user_id)
@@ -48,13 +85,30 @@ def create_book(db: Session, book: BookCreate, user_id: int):
         db.rollback()
         raise
 
-def get_articles(db: Session, user=None):
+def get_articles(db: Session, user=None, title: str = None, author_name: str = None, description: str = None, page: int = 1, page_size: int = 10):
     q = db.query(Article)
+
+    if author_name:
+        q = q.outerjoin(AuthorPerson, Article.author_id == AuthorPerson.id).outerjoin(
+            AuthorInstitution, Article.author_id == AuthorInstitution.id
+        ).filter(
+            or_(AuthorPerson.name.ilike(f"%{author_name}%"), AuthorInstitution.name.ilike(f"%{author_name}%"))
+        )
+
+    if title:
+        q = q.filter(Article.title.ilike(f"%{title}%"))
+
+    if description:
+        q = q.filter(Article.description.ilike(f"%{description}%"))
+
     if user is None:
         q = q.filter(Article.status == "published")
     else:
         q = q.filter((Article.status == "published") | (Article.user_id == user.id))
-    return q.all()
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(Article.id).limit(page_size).offset(offset).all()
+    return items, total
 
 def create_article(db: Session, article: ArticleCreate, user_id: int):
     db_article = Article(**article.model_dump(), user_id=user_id)
@@ -67,13 +121,31 @@ def create_article(db: Session, article: ArticleCreate, user_id: int):
         db.rollback()
         raise
 
-def get_videos(db: Session, user=None):
+def get_videos(db: Session, user=None, title: str = None, author_name: str = None, description: str = None, page: int = 1, page_size: int = 10):
     q = db.query(Video)
+
+    if author_name:
+        q = q.outerjoin(AuthorPerson, Video.author_id == AuthorPerson.id).outerjoin(
+            AuthorInstitution, Video.author_id == AuthorInstitution.id
+        ).filter(
+            or_(AuthorPerson.name.ilike(f"%{author_name}%"), AuthorInstitution.name.ilike(f"%{author_name}%"))
+        )
+
+    if title:
+        q = q.filter(Video.title.ilike(f"%{title}%"))
+
+    if description:
+        q = q.filter(Video.description.ilike(f"%{description}%"))
+
     if user is None:
         q = q.filter(Video.status == "published")
     else:
         q = q.filter((Video.status == "published") | (Video.user_id == user.id))
-    return q.all()
+
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(Video.id).limit(page_size).offset(offset).all()
+    return items, total
 
 def create_video(db: Session, video: VideoCreate, user_id: int):
     db_video = Video(**video.model_dump(), user_id=user_id)
@@ -86,12 +158,19 @@ def create_video(db: Session, video: VideoCreate, user_id: int):
         db.rollback()
         raise
 
-def get_authors(db: Session):
-    authors = db.query(Author).all()
-    return authors
+def get_authors(db: Session, page: int = 1, page_size: int = 10):
+    q = db.query(Author)
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(Author.id).limit(page_size).offset(offset).all()
+    return items, total
 
-def get_person_authors(db: Session):
-    return db.query(AuthorPerson).all()
+def get_person_authors(db: Session, page: int = 1, page_size: int = 10):
+    q = db.query(AuthorPerson)
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(AuthorPerson.id).limit(page_size).offset(offset).all()
+    return items, total
 
 def create_person_author(db: Session, author: AuthorPersonCreate):
     db_author = AuthorPerson(**author.model_dump())
@@ -104,8 +183,12 @@ def create_person_author(db: Session, author: AuthorPersonCreate):
         db.rollback()
         raise
 
-def get_institution_authors(db: Session):
-    return db.query(AuthorInstitution).all()
+def get_institution_authors(db: Session, page: int = 1, page_size: int = 10):
+    q = db.query(AuthorInstitution)
+    total = q.count()
+    offset = (page - 1) * page_size
+    items = q.order_by(AuthorInstitution.id).limit(page_size).offset(offset).all()
+    return items, total
 
 def create_institution_author(db: Session, author: AuthorInstitutionCreate):
     db_author = AuthorInstitution(**author.model_dump())

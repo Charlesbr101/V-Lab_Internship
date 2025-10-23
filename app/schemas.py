@@ -1,7 +1,20 @@
 from datetime import date
-from typing import Annotated
+from typing import Annotated, TypeVar, Generic, Optional, Dict, List
 from pydantic import BaseModel, EmailStr, PositiveInt, PastDate, model_validator, Field
+from pydantic.generics import GenericModel
 import re
+
+#################################
+# Generic pagination envelope
+T = TypeVar("T")
+
+
+class Pagination(GenericModel, Generic[T]):
+	items: List[T]
+	total: int
+	page: int
+	page_size: int
+	links: Dict[str, Optional[str]]
 
 ##################
 # User Schemas
