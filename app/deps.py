@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.db.models import User
+from app.core.security import pwd_context
 
 security = HTTPBasic()
 # optional security dependency (does not auto-error) so Swagger shows the field but it's optional
@@ -26,7 +27,8 @@ def get_current_user(credentials: HTTPBasicCredentials = Depends(security), db: 
     Password hashing is recommended for production.
     """
     user = db.query(User).filter(User.email == credentials.username).first()
-    if user is None or user.password != credentials.password:
+    # verify password against stored hash
+    if user is None or not pwd_context.verify(credentials.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication",
@@ -48,6 +50,6 @@ def get_current_user_optional(
         return None
 
     user = db.query(User).filter(User.email == credentials.username).first()
-    if user is None or user.password != credentials.password:
+    if user is None or not pwd_context.verify(credentials.password, user.password):
         return None
     return user

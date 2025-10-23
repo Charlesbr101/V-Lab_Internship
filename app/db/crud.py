@@ -2,12 +2,18 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.db.models import User, Book, Article, Video, AuthorPerson, AuthorInstitution, Material, Author
 from app.schemas import UserCreate, BookCreate, ArticleCreate, VideoCreate, AuthorPersonCreate, AuthorInstitutionCreate
+from app.core.security import pwd_context
 
 def get_users(db: Session):
     return db.query(User).all()
 
 def create_user(db: Session, user: UserCreate):
-    db_user = User(**user.model_dump())
+    """Create a new user and store a hashed password."""
+    data = user.model_dump()
+    # Hash the plaintext password before storing
+    if "password" in data and data["password"]:
+        data["password"] = pwd_context.hash(data["password"])
+    db_user = User(**data)
     try:
         db.add(db_user)
         db.commit()

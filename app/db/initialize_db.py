@@ -7,6 +7,7 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 from app.db.database import engine, SessionLocal
 from app.db import models
 from app import schemas
+import app.db.crud as crud
 from app.schemas import (
     UserCreate,
     AuthorPersonCreate,
@@ -48,11 +49,14 @@ def _seed(db):
         except ValidationError as ve:
             print("User seed validation failed:", ve)
             raise
-        alice = models.User(**u1.model_dump())
-        bob = models.User(**u2.model_dump())
-        db.add_all([alice, bob])
-        db.commit()
-        print("Added example users: alice, bob")
+        # Use crud.create_user so passwords are hashed consistently
+        try:
+            crud.create_user(db, u1)
+            crud.create_user(db, u2)
+            print("Added example users: alice, bob")
+        except Exception as e:
+            print("Failed to create seed users:", e)
+            raise
 
     # Authors
     if not db.query(models.AuthorPerson).first() and not db.query(models.AuthorInstitution).first():
