@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.db.models import User, Book, Article, Video, PersonAuthor, InstitutionAuthor, Material
+from app.db.models import User, Book, Article, Video, PersonAuthor, InstitutionAuthor, Material, Author
 from app.schemas import UserCreate, BookCreate, ArticleCreate, VideoCreate, PersonAuthorCreate, InstitutionAuthorCreate
 
 def get_users(db: Session):
@@ -85,6 +85,10 @@ def create_video(db: Session, video: VideoCreate):
     except Exception:
         db.rollback()
         raise
+
+def get_authors(db: Session):
+    authors = db.query(Author).all()
+    return authors
 
 def get_person_authors(db: Session):
     return db.query(PersonAuthor).all()

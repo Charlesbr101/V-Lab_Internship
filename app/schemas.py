@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Self
 from pydantic import BaseModel, EmailStr, PositiveInt, model_validator
 
 # User Schemas
@@ -23,7 +22,7 @@ class MaterialBase(BaseModel):
 	author_id: PositiveInt
 	user_id: PositiveInt
 
-	@model_validator(mode="after")
+	@model_validator(mode="before")
 	def validate_status(cls, values):
 		status = values.get("status") if isinstance(values, dict) else getattr(values, "status", None)
 
@@ -40,6 +39,22 @@ class Material(MaterialBase):
 class BookBase(MaterialBase):
 	isbn: str
 	page_count: PositiveInt
+
+	@model_validator(mode="before")
+	def validate_isbn(cls, values):
+		isbn = values.get("isbn") if isinstance(values, dict) else getattr(values, "isbn", None)
+		# Check ISBN-13 validity
+		if len(isbn) == 13 and isbn.isdigit():
+			checksum = sum(int(d) * (1 if i % 2 == 0 else 3) for i, d in enumerate(isbn[:-1]))
+			checksum = (10 - (checksum % 10)) % 10
+			if checksum == int(isbn[-1]):
+				return values
+		raise ValueError("Invalid ISBN-13")
+
+class PreBookCreate(BookBase):
+	# Optional Title and Page_count fields
+	title: str | None = None
+	page_count: PositiveInt | None = None
 
 class BookCreate(BookBase):
 	pass
