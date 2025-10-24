@@ -53,11 +53,20 @@ make run
 ## End the API + database
 
 ```bash
-# interrupt development server
+# interrupt development server on terminal
 Ctrl+C
 
 # end database
 make db-down
+```
+
+## Run production API
+```bash
+# start MySQL and initialize the DB
+make db-up
+
+# start the production server with auto-reload
+make run-prod
 ```
 
 ## Run Tests
@@ -67,6 +76,7 @@ make db-down
 make smoke-test
 
 # run tests regarding authentication, relations, External API, pagination and data schemas
+# make sure the main project database is not running
 make tests
 ```
 
