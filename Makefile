@@ -41,6 +41,18 @@ db-up:
 	@echo "Initializing database schema (app.db.initialize_db as module)"
 	$(PY) -m app.db.initialize_db
 
+
+.PHONY: tests
+tests:
+	@echo "Starting test MySQL (docker-compose -f docker-compose.test.yml up -d)"
+	# Start the test DB service (reads .env.test)
+	docker-compose -f docker-compose.test.yml up -d
+	@echo "Running tests (conftest.py will handle waiting/creation of the test DB)"
+	# Run pytest; conftest will read .env.test and wait/create the DB as needed
+	$(PY) -m pytest -q
+	@echo "Tearing down test compose stack"
+	docker-compose -f docker-compose.test.yml down -v
+
 init-db: venv
 	@echo "Run database initialization script"
 	$(PY) -m app.db.initialize_db

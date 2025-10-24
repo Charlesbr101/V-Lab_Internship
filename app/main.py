@@ -25,12 +25,9 @@ from app.routers import (
 )
 
 app.include_router(users_router)
-app.include_router(materials_router)
+# Include specific material-type routers before the generic /materials router
 app.include_router(books_router)
 app.include_router(articles_router)
 app.include_router(videos_router)
+app.include_router(materials_router)
 app.include_router(authors_router)
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the Digital Library API"}

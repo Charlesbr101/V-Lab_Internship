@@ -76,7 +76,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), current
 
 @router.put("/{user_id}", response_model=schemas.User, responses=schemas.HTTP_ERROR_RESPONSES)
 def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    # Only root can update users
+    # Only root or same user can update an user
     if not getattr(current_user, "is_root", False) and user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root or same user can manage users")
     db_user = crud.get_user(db, user_id)
@@ -91,7 +91,7 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(ge
 
 @router.delete("/{user_id}", response_model=schemas.User, responses=schemas.HTTP_ERROR_RESPONSES)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    # Only root can delete users
+    # Only root or same user can delete an user
     if not getattr(current_user, "is_root", False) and user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the root or same user can manage users")
     db_user = crud.get_user(db, user_id)

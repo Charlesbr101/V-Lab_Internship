@@ -106,15 +106,15 @@ class BookBase(MaterialBase):
 
 class BookCreate(BookBase):
 	# Optional Title and Page_count fields
-	title: Annotated[str, Field(
+	title: Optional[Annotated[str, Field(
 		min_length=3, max_length=100, 
 		description="Title of the material (Can be ommited if ISBN is provided)",
 		example="The Great Gatsby"
-	)] = None
-	page_count: Annotated[PositiveInt, Field(
+	)]] = None
+	page_count: Optional[Annotated[PositiveInt, Field(
 		description="Number of pages in the book (Can be omitted if ISBN is provided)", 
 		example=100
-	)] = None
+	)]] = None
 
 class BookUpdate(BookBase):
 	pass
